@@ -16,7 +16,7 @@ server:
 spring:
   datasource:
     username: root
-    password: Somik_muha~44
+    password: sjsjsjsj
     url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
   jpa:
     properties:
