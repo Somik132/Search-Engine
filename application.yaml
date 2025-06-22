@@ -1,0 +1,28 @@
+# example values
+
+indexing-settings:
+  sites:
+    - url: https://www.lenta.ru
+      name: Lenta.ru
+    - url: http://www.playback.ru
+      name: PlayBack.Ru
+connection-data:
+  userAgent: Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6
+  referrer: http://www.google.com
+
+server:
+  port: 8080
+
+spring:
+  datasource:
+    username: root
+    password: Somik_muha~44
+    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true

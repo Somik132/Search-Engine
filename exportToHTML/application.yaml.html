@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>application.yaml</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #5f826b; font-style: italic;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #bcbec4;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+application.yaml</font>
+</center></td></tr></table>
+<pre><span class="s0"># example values</span>
+
+<span class="s2">indexing-settings</span><span class="s3">:</span>
+  <span class="s2">sites</span><span class="s3">:</span>
+    <span class="s3">- </span><span class="s2">url</span><span class="s3">: </span><span class="s4">https://www.lenta.ru</span>
+      <span class="s2">name</span><span class="s3">: </span><span class="s4">Lenta.ru</span>
+    <span class="s3">- </span><span class="s2">url</span><span class="s3">: </span><span class="s4">http://www.playback.ru</span>
+      <span class="s2">name</span><span class="s3">: </span><span class="s4">PlayBack.Ru</span>
+
+<span class="s2">server</span><span class="s3">:</span>
+  <span class="s2">port</span><span class="s3">: </span><span class="s4">8080</span>
+
+<span class="s2">spring</span><span class="s3">:</span>
+  <span class="s2">datasource</span><span class="s3">:</span>
+    <span class="s2">username</span><span class="s3">: </span><span class="s4">root</span>
+    <span class="s2">password</span><span class="s3">: </span><span class="s4">Somik_muha~44</span>
+    <span class="s2">url</span><span class="s3">: </span><span class="s4">jdbc:mysql://localhost:3306/search_engine?useSSL=false&amp;requireSSL=false&amp;allowPublicKeyRetrieval=true</span>
+  <span class="s2">jpa</span><span class="s3">:</span>
+    <span class="s2">properties</span><span class="s3">:</span>
+      <span class="s2">hibernate</span><span class="s3">:</span>
+        <span class="s2">format_sql</span><span class="s3">: </span><span class="s4">true</span>
+        <span class="s2">dialect</span><span class="s3">: </span><span class="s4">org.hibernate.dialect.MySQL8Dialect</span>
+    <span class="s2">hibernate</span><span class="s3">:</span>
+      <span class="s2">ddl-auto</span><span class="s3">: </span><span class="s4">update</span>
+    <span class="s2">show-sql</span><span class="s3">: </span><span class="s4">true</span>
+</pre>
+</body>
+</html>
