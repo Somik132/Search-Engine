@@ -1,7 +1,5 @@
 package searchengine.services;
 
-import searchengine.services.Link;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.RecursiveTask;
@@ -15,7 +13,6 @@ public class ListOfLinks extends RecursiveTask<String> {
     }
     @Override
     protected String compute() {
-        String ans = link.getName();
         List<ListOfLinks> taskList = new ArrayList<>();
         if (link.getLink().contains("http")) {
             for (Link child : link.getChildren()) {
@@ -33,13 +30,10 @@ public class ListOfLinks extends RecursiveTask<String> {
                 task.fork();
                 taskList.add(task);
             }
-
             for (ListOfLinks task : taskList) {
-                ans += "\n";
-                ans = ans + task.join();
+                task.join();
             }
         }
-
-        return ans;
+        return null;
     }
 }

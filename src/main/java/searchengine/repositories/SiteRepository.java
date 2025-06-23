@@ -17,14 +17,4 @@ public interface SiteRepository extends JpaRepository<SiteEntity, Integer> {
     List<SiteEntity> findAllContainingTheStatus(String status);
 
     SiteEntity findByUrl(String siteUrl);
-
-    @Modifying
-    @Transactional
-    @Query(value = "set foreign_key_checks=0", nativeQuery = true)
-    void SetForeignKeyChecksToZero();
-
-    @Modifying
-    @Transactional
-    @Query(value = "set foreign_key_checks=1", nativeQuery = true)
-    void SetForeignKeyChecksToOne();
 }

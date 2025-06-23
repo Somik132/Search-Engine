@@ -28,7 +28,7 @@ public class LemmaFinder {
         throw new RuntimeException("Disallow construct");
     }
 
-    public Map<String, Integer> CountAllLemmas(String text) {
+    public Map<String, Integer> сountAllLemmas(String text) {
         String[] words = arrayContainsRussianWords(text);
         HashMap<String, Integer> lemmas = new HashMap<>();
 

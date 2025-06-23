@@ -7,5 +7,5 @@ import java.util.List;
 @Data
 public class StatisticsData {
     private TotalStatistics total;
-    private List<DetailedStatisticsItemInt> detailed;
+    private List<DetailedStatisticsItem> detailed;
 }

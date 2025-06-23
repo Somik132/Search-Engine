@@ -26,14 +26,11 @@ import java.util.concurrent.ForkJoinPool;
 @Service
 @RequiredArgsConstructor
 public class IndexationServiceImpl implements IndexationService {
-    public static boolean indexingIsAllowed = true;
-    @Autowired
+    public volatile static boolean indexingIsAllowed = true;
+    public volatile static boolean isIndexing = false;
     private final PageRepository pageRepository;
-    @Autowired
     private final SiteRepository siteRepository;
-    @Autowired
     private final LemmaRepository lemmaRepository;
-    @Autowired
     private final IndexRepository indexRepository;
     private final SitesList sitesList;
     private final ConnectionData connectionData;
@@ -54,11 +51,11 @@ public class IndexationServiceImpl implements IndexationService {
     }
 
     private void startWebPageCrawling() {
+        isIndexing = true;
         indexingIsAllowed = true;
         for (Site site : sitesList.getSites()) {
             String url = site.getUrl();
 
-            siteRepository.SetForeignKeyChecksToZero();
             if (Objects.nonNull(siteRepository.findByUrl(url))) {
                 siteRepository.delete(siteRepository.findByUrl(url));
             }
@@ -66,7 +63,6 @@ public class IndexationServiceImpl implements IndexationService {
             SiteEntity siteEntity = createSiteEntity(Status.INDEXING, "",
                     site.getUrl(), site.getName());
             siteRepository.save(siteEntity);
-            siteRepository.SetForeignKeyChecksToOne();
             Link link = new Link(sitesList, indexRepository, lemmaRepository,
                     pageRepository, siteEntity.getUrl(),
                     "", siteRepository, siteEntity, connectionData);
@@ -82,10 +78,9 @@ public class IndexationServiceImpl implements IndexationService {
                 siteEntity.setLastError("Runtime exception");
                 e.printStackTrace();
             }
-            siteRepository.SetForeignKeyChecksToZero();
             siteRepository.save(siteEntity);
-            siteRepository.SetForeignKeyChecksToOne();
         }
+        isIndexing = false;
     }
 
     private SiteEntity createSiteEntity(Status status, String lastError,
@@ -96,16 +91,19 @@ public class IndexationServiceImpl implements IndexationService {
         siteEntity.setLastError(lastError);
         siteEntity.setUrl(url);
         siteEntity.setName(name);
+        siteEntity.setPages(new HashSet<>());
+        siteEntity.setLemmas(new HashSet<>());
         return siteEntity;
     }
 
     @Override
     public ResponseEntity<Object> stopIndexing() throws IOException {
-        if (siteRepository.findAllContainingTheStatus("INDEXING").isEmpty()) {
+        if (!isIndexing) {
             ResponseFalse responseFalse = new ResponseFalse();
             responseFalse.setError("Индексация не запущена");
             return ResponseEntity.status(403).body(responseFalse);
         }
+        isIndexing = false;
         indexingIsAllowed = false;
         ResponseTrue responseTrue = new ResponseTrue();
         List<SiteEntity> siteEntities = siteRepository.findAll();
@@ -163,7 +161,7 @@ public class IndexationServiceImpl implements IndexationService {
             deleteIndexPage(pageEntity);
         }
         LemmaFinder lemmaFinder = new LemmaFinder(new RussianLuceneMorphology());
-        Map<String, Integer> lemmas = lemmaFinder.CountAllLemmas(lemmaFinder.deleteHTMLTag(pageEntity.getContent()));
+        Map<String, Integer> lemmas = lemmaFinder.сountAllLemmas(lemmaFinder.deleteHTMLTag(pageEntity.getContent()));
         for (Map.Entry<String, Integer> entry : lemmas.entrySet()) {
             List<LemmaEntity> lemmaEntities = lemmaRepository.findAllContains(entry.getKey());
             LemmaEntity lemmaEntity = null;

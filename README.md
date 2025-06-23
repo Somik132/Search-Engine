@@ -1,11 +1,11 @@
-# Поисковой движок 
+# Поисковой движок
 
 Проект с подключенными библиотеками лемматизаторами.
 Включает в себя функции индексации сайтов и отдельных веб страниц и поиска по этим сайтам.
 
 Содержит веб интерфейс по ссылке http://localhost:8080.
 Во вкладке dashboard можно увидеть всю информацию про сайты, указанные в конфигурационном файле application.yaml.
-
+Чтобы обновить данные в этой вкладке нужно обновить саму веб страницу.
 
 
 ![image](https://github.com/user-attachments/assets/861e57f9-77c1-4d8a-a686-054b595b33ea)
@@ -19,14 +19,14 @@
 ![image](https://github.com/user-attachments/assets/d434b55b-67a3-4969-a641-b749a750379b)
 
 Далее опишу кратко, что происходит в программе: пакет config нужен для хранения данных, указанных в application.yaml.
-Контроллеры нужны для связи между локальным сайтом http://localhost:8080 и самой программой. В dto хранятся нужные программе объекты. В model отражения таблиц из базы данных. Репозитории для связи с таблицами из базы данных. В сервисах находится вся логика программы: indexationService и indexationServiceImpl - все что связано с индексацией, LemmaFinder для нахождения лемм слов, Link и ListOfLinks для сногопоточного обхода веб страниц. SearchService и SearchServiceImpl для поиска по сайтам. StatisticsService и StatisticsServiceImpl для вычисления статистики. 
+Контроллеры нужны для связи между локальным сайтом http://localhost:8080 и самой программой. В dto хранятся нужные программе объекты. В model отражения таблиц из базы данных. Репозитории для связи с таблицами из базы данных. В сервисах находится вся логика программы: indexationService и indexationServiceImpl - все что связано с индексацией, LemmaFinder для нахождения лемм слов, Link и ListOfLinks для сногопоточного обхода веб страниц. SearchService и SearchServiceImpl для поиска по сайтам. StatisticsService и StatisticsServiceImpl для вычисления статистики.
 
 ![image](https://github.com/user-attachments/assets/299cd81b-fd63-40c0-a802-4a24e1805443)
 
 В application.yaml можете внести все интересующие вас сайты. Перед поиском обязательно проиндексируйте сайты, нажав на кнопку `START INDEXING`
 
 # Cтэк используемых технологий
-Язык программирования Java. Использовал фреймворк Spring. 
+Язык программирования Java. Использовал фреймворк Spring.
 Библиотеки: org.apache.lucene.morphology, org.jsoup, mysql, org.springframework.boot.
 Использовал базу данных MySQL.
 
@@ -57,7 +57,7 @@ jar файлов:
 * В macOs по адресу `/Users/<Имя вашего пользователя>/.m2`
 
 >**Внимание!** Актуальный токен, строка которую надо вставить в тег `<value>...</value>`
-[находится в документе по ссылке](https://docs.google.com/document/d/1rb0ysFBLQltgLTvmh-ebaZfJSI7VwlFlEYT9V5_aPjc/edit?usp=sharing). 
+[находится в документе по ссылке](https://docs.google.com/document/d/1rb0ysFBLQltgLTvmh-ebaZfJSI7VwlFlEYT9V5_aPjc/edit?usp=sharing).
 
 и добавьте внутри тега `settings` текст конфигурации:
 
@@ -110,7 +110,7 @@ jar файлов:
 **Не забудьте поменять токен на актуальный!**
 
 После этого, в проекте обновите зависимости (Ctrl+Shift+O / ⌘⇧I) или
-принудительно обновите данные из pom.xml. 
+принудительно обновите данные из pom.xml.
 
 Для этого вызовите контекстное
 у файла `pom.xml` в дереве файла проектов **Project** и выберите пункт меню **Maven -> Reload Project**.

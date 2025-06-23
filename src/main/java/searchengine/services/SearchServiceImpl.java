@@ -26,17 +26,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SearchServiceImpl implements SearchService {
 
-    @Autowired
     private final SiteRepository siteRepository;
-    @Autowired
     private final LemmaRepository lemmaRepository;
-    @Autowired
     private final IndexRepository indexRepository;
 
     @Override
     public ResponseEntity<Object> search(String query, String site, Integer offset, Integer limit) throws IOException {
         LemmaFinder lemmaFinder = new LemmaFinder(new RussianLuceneMorphology());
-        Map<String, Integer> mapLemmas = lemmaFinder.CountAllLemmas(query);
+        Map<String, Integer> mapLemmas = lemmaFinder.сountAllLemmas(query);
         List<LemmaEntity> lemmaEntities = new ArrayList<>();
         SearchResponseFalse responseFalse = new SearchResponseFalse();
 
