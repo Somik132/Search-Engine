@@ -127,9 +127,12 @@ public class IndexationServiceImpl implements IndexationService {
         if (pageEntities.isEmpty()) {
             boolean notFound = true;
             for (Site site : sitesList.getSites()) {
-                System.out.println(url + " = " + site.getName().toLowerCase(Locale.ROOT));
                 if (url.contains(site.getName().toLowerCase(Locale.ROOT))) {
                     siteEntity = siteRepository.findByUrl(site.getUrl());
+                    if (siteEntity == null) {
+                        siteEntity = createSiteEntity(Status.FAILED, "", site.getUrl(), site.getName());
+                        siteRepository.save(siteEntity);
+                    }
 
                     notFound = false;
                     Connection.Response response = Jsoup.connect(url)

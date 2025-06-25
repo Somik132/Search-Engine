@@ -31,7 +31,7 @@ public class SearchServiceImpl implements SearchService {
     private final IndexRepository indexRepository;
 
     @Override
-    public ResponseEntity<Object> search(String query, String site, Integer offset, Integer limit) throws IOException {
+    public ResponseEntity<Object> search(String query, String site, int offset, int limit) throws IOException {
         LemmaFinder lemmaFinder = new LemmaFinder(new RussianLuceneMorphology());
         Map<String, Integer> mapLemmas = lemmaFinder.сountAllLemmas(query);
         List<LemmaEntity> lemmaEntities = new ArrayList<>();
@@ -62,6 +62,11 @@ public class SearchServiceImpl implements SearchService {
             cntPages = siteEntity.getPages().size();
             pageEntities.addAll(siteEntity.getPages());
         }
+        return startSearch(mapLemmas, cntPages, lemmaEntities, pageEntities, offset, limit);
+    }
+
+    private ResponseEntity<Object> startSearch(Map<String, Integer> mapLemmas, int cntPages, List<LemmaEntity> lemmaEntities,
+                                               List<PageEntity> pageEntities, int offset, int limit) throws IOException {
         for (Map.Entry<String, Integer> lemma : mapLemmas.entrySet()) {
             List<LemmaEntity> tempLemmaEntities = lemmaRepository.findAllContains(lemma.getKey());
             for (LemmaEntity tempLemmaEntity : tempLemmaEntities) {
