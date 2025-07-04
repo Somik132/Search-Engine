@@ -1,6 +1,7 @@
 package searchengine.services;
 
 
+import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties;
 import org.springframework.http.ResponseEntity;
 import searchengine.model.PageEntity;
 import searchengine.model.SiteEntity;

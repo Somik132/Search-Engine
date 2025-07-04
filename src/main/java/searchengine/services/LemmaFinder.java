@@ -4,12 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
 import org.jsoup.Jsoup;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
 @Slf4j
+@Service
 public class LemmaFinder {
     private final LuceneMorphology luceneMorphology;
     private static final String WORD_TYPE_REGEX = "\\W\\w&&[^а-яА-Я\\s]";
@@ -24,8 +26,8 @@ public class LemmaFinder {
         this.luceneMorphology = luceneMorphology;
     }
 
-    public LemmaFinder() {
-        throw new RuntimeException("Disallow construct");
+    public LemmaFinder() throws IOException {
+        this(new RussianLuceneMorphology());
     }
 
     public Map<String, Integer> сountAllLemmas(String text) {

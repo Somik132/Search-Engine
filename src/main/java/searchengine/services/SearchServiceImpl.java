@@ -29,10 +29,10 @@ public class SearchServiceImpl implements SearchService {
     private final SiteRepository siteRepository;
     private final LemmaRepository lemmaRepository;
     private final IndexRepository indexRepository;
+    private final LemmaFinder lemmaFinder;
 
     @Override
     public ResponseEntity<Object> search(String query, String site, int offset, int limit) throws IOException {
-        LemmaFinder lemmaFinder = new LemmaFinder(new RussianLuceneMorphology());
         Map<String, Integer> mapLemmas = lemmaFinder.сountAllLemmas(query);
         List<LemmaEntity> lemmaEntities = new ArrayList<>();
         SearchResponseFalse responseFalse = new SearchResponseFalse();
@@ -134,17 +134,16 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private StringBuilder getSnippet(PageEntity pageEntity, List<LemmaEntity> lemmaEntities) throws IOException {
-        int quantityWordsInSnippet = 35;
+        int quantityWordsInSnippet = 25;
         LuceneMorphology luceneMorphology = new RussianLuceneMorphology();
         List<String> wordsF = new ArrayList<>(Arrays.stream(pageEntity.getContent()
-                .replaceAll("([^а-яА-Я0-9\\s\\p{Punct}])", "")
+                .replaceAll("([^а-яА-Я\\s?!:,.;])", "")
                 .trim()
                 .split("\\s+")).toList());
         List<String> lemmaWords = new ArrayList<>();
         List<String> words = new ArrayList<>();
         for (String word : wordsF) {
-            if (!word.replaceAll("([^а-яА-Я])", "").isEmpty()
-                    && word.replaceAll("([^\\p{Punct}])", "").length() <= 3) {
+            if (!word.replaceAll("([^а-яА-Я])", "").isEmpty()) {
                 words.add(word);
             }
         }

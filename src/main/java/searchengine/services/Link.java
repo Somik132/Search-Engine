@@ -1,5 +1,6 @@
 package searchengine.services;
 
+import com.mysql.cj.conf.ConnectionUrlParser;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.lucene.morphology.LuceneMorphology;
@@ -9,10 +10,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import searchengine.config.ConnectionData;
+import searchengine.config.Site;
 import searchengine.config.SitesList;
-import searchengine.model.PageEntity;
-import searchengine.model.SiteEntity;
+import searchengine.dto.response.ResponseFalse;
+import searchengine.dto.response.ResponseTrue;
+import searchengine.model.*;
 import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
@@ -21,40 +28,33 @@ import searchengine.repositories.SiteRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 
+@Service
 @Getter
 public class Link {
     private final IndexRepository indexRepository;
     private final LemmaRepository lemmaRepository;
     private final PageRepository pageRepository;
-    private final String link;
-    private final String tab;
     private final SiteRepository siteRepository;
-    private final SiteEntity siteEntity;
     private final SitesList sitesList;
-    private final IndexationService indexationService;
     private final ConnectionData connectionData;
+    private final LemmaFinder lemmaFinder;
 
-
-    public Link(SitesList sitesList, IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, String link,
-                String tab, SiteRepository siteRepository, SiteEntity siteEntity, ConnectionData connectionData) {
+    @Autowired
+    public Link(IndexRepository indexRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, SiteRepository siteRepository, SitesList sitesList, ConnectionData connectionData, LemmaFinder lemmaFinder) {
         this.indexRepository = indexRepository;
         this.lemmaRepository = lemmaRepository;
         this.pageRepository = pageRepository;
-        this.link = link;
-        this.tab = tab;
-        this.sitesList = sitesList;
         this.siteRepository = siteRepository;
-        this.siteEntity = siteEntity;
+        this.sitesList = sitesList;
         this.connectionData = connectionData;
-        this.indexationService = new IndexationServiceImpl(pageRepository, siteRepository,
-                lemmaRepository, indexRepository, sitesList, connectionData);
+        this.lemmaFinder = lemmaFinder;
     }
-    public HashSet<Link> getChildren() {
-        HashSet<Link> links = new HashSet<>();
+
+    public HashSet<Pair<Link, String>> getChildren(SiteEntity siteEntity, String link) {
+        HashSet<Pair<Link, String>> links = new HashSet<>();
         if (!IndexationServiceImpl.indexingIsAllowed) {
             return links;
         }
@@ -73,7 +73,7 @@ public class Link {
                 pageEntity.setCode(response.statusCode());
                 pageEntity.setContent(response.body());
                 pageRepository.save(pageEntity);
-                indexationService.indexPage(pageEntity.getPath());
+                indexPage(pageEntity.getPath(), siteEntity, pageEntity);
                 Document document = Jsoup.connect(link)
                         .userAgent(connectionData.getUserAgent())
                         .referrer(connectionData.getReferrer())
@@ -87,8 +87,9 @@ public class Link {
                         if (link.charAt(link.length() - 1) == '/') {
                             temp = temp.substring(1);
                         }
-                        Link tempLink = new Link(sitesList, indexRepository, lemmaRepository, pageRepository, link + temp, tab + "    ", siteRepository, siteEntity, connectionData);
-                        links.add(tempLink);
+                        Link tempLink = new Link(indexRepository, lemmaRepository, pageRepository,
+                                siteRepository, sitesList, connectionData, lemmaFinder);
+                        links.add(Pair.of(tempLink, link + temp));
                     }
                 }
             }
@@ -97,20 +98,96 @@ public class Link {
         }
         return links;
     }
-    public String getName() {
-        return tab + link;
+
+    public ResponseEntity<Object> indexPage(String url, SiteEntity siteEntity,
+                                            PageEntity pageEntity) throws IOException {
+        ResponseTrue responseTrue = new ResponseTrue();
+        List<PageEntity> pageEntities = pageRepository.findAllContains(url);
+        if (pageEntities.isEmpty() && pageEntity == null) {
+            boolean notFound = true;
+            for (Site site : sitesList.getSites()) {
+                if (url.contains(site.getName().toLowerCase(Locale.ROOT))) {
+                    siteEntity = siteRepository.findByUrl(site.getUrl());
+                    if (siteEntity == null) {
+                        siteEntity = createSiteEntity(Status.FAILED, "", site.getUrl(), site.getName());
+                        siteRepository.save(siteEntity);
+                    }
+
+                    notFound = false;
+                    Connection.Response response = Jsoup.connect(url)
+                            .timeout(5000)
+                            .ignoreHttpErrors(true)
+                            .execute();
+                    String statusCode = Integer.toString(response.statusCode());
+                    if (statusCode.charAt(0) != '2') {
+                        ResponseFalse responseFalse = new ResponseFalse();
+                        responseFalse.setError("Код ошибки: " + statusCode);
+                        return ResponseEntity.status(Integer.parseInt(statusCode)).body(responseFalse);
+                    }
+                    pageEntity = new PageEntity();
+                    pageEntity.setSiteId(siteEntity);
+                    pageEntity.setPath(url);
+                    pageEntity.setCode(response.statusCode());
+                    pageEntity.setContent(response.body());
+                    pageRepository.save(pageEntity);
+                    break;
+                }
+            }
+            if (notFound) {
+                ResponseFalse responseFalse = new ResponseFalse();
+                responseFalse.setError("Данная страница находится за пределами сайтов, указанных в конфигурационном файле");
+                return ResponseEntity.status(400).body(responseFalse);
+            }
+        } else {
+            pageEntity = pageEntities.get(0);
+            deleteIndexPage(pageEntity);
+        }
+        Map<String, Integer> lemmas = lemmaFinder.сountAllLemmas(lemmaFinder.deleteHTMLTag(pageEntity.getContent()));
+        for (Map.Entry<String, Integer> entry : lemmas.entrySet()) {
+            List<LemmaEntity> lemmaEntities = lemmaRepository.findAllContains(entry.getKey());
+            LemmaEntity lemmaEntity;
+            if (lemmaEntities.isEmpty()) {
+                lemmaEntity = new LemmaEntity();
+                lemmaEntity.setSiteId(pageEntity.getSiteId());
+                lemmaEntity.setFrequency(1);
+                lemmaEntity.setLemma(entry.getKey());
+            } else {
+                lemmaEntity = lemmaEntities.get(0);
+                lemmaEntity.setFrequency(lemmaEntity.getFrequency() + 1);
+            }
+            lemmaRepository.save(lemmaEntity);
+            IndexEntity indexEntity = new IndexEntity();
+            indexEntity.setPageId(pageEntity);
+            indexEntity.setLemmaId(lemmaEntity);
+            indexEntity.setRank((float) entry.getValue());
+            indexRepository.save(indexEntity);
+        }
+        return ResponseEntity.ok(responseTrue);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Link link1 = (Link) o;
-        return Objects.equals(link, link1.link) && Objects.equals(tab, link1.tab);
+    private void deleteIndexPage(PageEntity pageEntity) {
+        for (IndexEntity indexEntity : indexRepository.findAllByPageId(pageEntity.getId())) {
+            indexRepository.delete(indexEntity);
+            LemmaEntity lemmaEntity = indexEntity.getLemmaId();
+            if (lemmaEntity.getFrequency() == 1) {
+                lemmaRepository.delete(lemmaEntity);
+            } else {
+                lemmaEntity.setFrequency(lemmaEntity.getFrequency() - 1);
+                lemmaRepository.save(lemmaEntity);
+            }
+        }
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(link, tab);
+    private SiteEntity createSiteEntity(Status status, String lastError,
+                                        String url, String name) {
+        SiteEntity siteEntity = new SiteEntity();
+        siteEntity.setStatus(status);
+        siteEntity.setStatusTime(LocalDateTime.now());
+        siteEntity.setLastError(lastError);
+        siteEntity.setUrl(url);
+        siteEntity.setName(name);
+        siteEntity.setPages(new HashSet<>());
+        siteEntity.setLemmas(new HashSet<>());
+        return siteEntity;
     }
 }
